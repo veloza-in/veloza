@@ -327,6 +327,7 @@
             justify-content: center;
             overflow: hidden;
             position: relative;
+            cursor: pointer;
         }
         
         .product-image img {
@@ -365,6 +366,122 @@
             color: var(--gold);
             margin-bottom: 20px;
             display: block;
+        }
+        
+        /* Modal Popup */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            overflow: auto;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .modal.show {
+            display: flex;
+            opacity: 1;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: var(--white);
+            margin: auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            position: relative;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+            animation: modalFadeIn 0.3s ease;
+        }
+        
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .close-modal:hover {
+            color: var(--dark-gray);
+        }
+        
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .modal-body {
+                flex-direction: row;
+            }
+        }
+        
+        .modal-image {
+            flex: 1;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .modal-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .modal-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .modal-details h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: var(--dark-gray);
+        }
+        
+        .modal-details p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .modal-price {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 25px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
         }
         
         /* Admin Panel */
@@ -463,7 +580,7 @@
             background-color: var(--gold);
             bottom: 0;
             left: 0;
-        }
+            }
         
         .footer-section p {
             margin-bottom: 15px;
@@ -551,12 +668,30 @@
             .admin-form {
                 padding: 25px;
             }
+            
+            .modal-body {
+                flex-direction: column;
+            }
+            
+            .modal-buttons {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
     <!-- Animated background particles -->
     <div class="particles" id="particles"></div>
+
+    <!-- Image Popup Modal -->
+    <div id="imageModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeModal">&times;</span>
+            <div class="modal-body" id="modalBody">
+                <!-- Content will be inserted by JavaScript -->
+            </div>
+        </div>
+    </div>
 
     <!-- Header -->
     <header>
@@ -785,11 +920,11 @@
             emptyCollection.style.display = 'none';
             
             // Add each car to the display
-            cars.forEach(car => {
+            cars.forEach((car, index) => {
                 const carElement = document.createElement('div');
                 carElement.classList.add('product-card');
                 carElement.innerHTML = `
-                    <div class="product-image">
+                    <div class="product-image" onclick="openModal(${index})">
                         <img src="${car.imageUrl}" alt="${car.name}" onerror="this.src='https://images.unsplash.com/photo-1569173413095-a951d38e8f58?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80'">
                     </div>
                     <div class="product-info">
@@ -803,6 +938,56 @@
                 productGrid.appendChild(carElement);
             });
         }
+        
+        // Modal functions
+        function openModal(carIndex) {
+            const cars = JSON.parse(localStorage.getItem('velozaCars')) || [];
+            const car = cars[carIndex];
+            
+            if (!car) return;
+            
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+                <div class="modal-image">
+                    <img src="${car.imageUrl}" alt="${car.name}" onerror="this.src='https://images.unsplash.com/photo-1569173413095-a951d38e8f58?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80'">
+                </div>
+                <div class="modal-details">
+                    <h2>${car.name}</h2>
+                    <p>${car.description}</p>
+                    <div class="modal-price">${car.price}</div>
+                    <div class="modal-buttons">
+                        <a href="https://www.instagram.com/veloza.in/" target="_blank" class="btn">Buy Now</a>
+                        <button class="btn" style="background: #666;" onclick="closeModal()">Close</button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('imageModal').classList.add('show');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        }
+        
+        function closeModal() {
+            document.getElementById('imageModal').classList.remove('show');
+            document.body.style.overflow = 'auto'; // Enable scrolling
+        }
+        
+        // Close modal when clicking outside content
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('imageModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+        
+        // Close modal with escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+        
+        // Set up close button
+        document.getElementById('closeModal').addEventListener('click', closeModal);
         
         // Smooth scrolling
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
